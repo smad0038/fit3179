@@ -1,0 +1,95 @@
+{
+  "$schema": "https://vega.github.io/schema/vega-lite/v5.json",
+  "description": "Monthly koala sightings (filtered by year and state) with index scale and annotations.",
+  "width": 900,
+  "height": 300,
+
+  "params": [
+    { "name": "year_min",  "value": 2021,
+      "bind": { "input": "range", "min": 2000, "max": 2025, "step": 1, "name": "Min year " } },
+
+    { "name": "state_sel", "value": "All",
+      "bind": { "input": "select",
+        "options": ["All","Queensland","New South Wales","Victoria","South Australia"],
+        "name": " State " } }
+  ],
+
+  "data": { "url": "data/occ_koala_recent.csv" },
+
+  "transform": [
+    { "calculate": "toDate(datum.eventDate)", "as": "dt" },
+    { "calculate": "year(datum.dt)", "as": "year" },
+    { "calculate": "datum.state ? datum.state : datum.stateProvince", "as": "state2" },
+
+    { "filter": "isValid(datum.lon) && isValid(datum.lat)" },
+    { "filter": "datum.lat >= -45 && datum.lat <= -10 && datum.lon >= 110 && datum.lon <= 155" },
+
+    { "filter": "datum.year >= year_min" },
+    { "filter": "state_sel == 'All' || datum.state2 == state_sel" },
+
+    { "timeUnit": "yearmonth", "field": "dt", "as": "ym" },
+    { "aggregate": [{ "op": "count", "as": "sightings" }], "groupby": ["ym"] },
+
+    { "joinaggregate": [{ "op": "max", "field": "sightings", "as": "max_sightings" }] },
+    { "calculate": "round(100 * datum.sightings / datum.max_sightings)", "as": "index" }
+  ],
+
+  "layer": [
+    {
+      "mark": { "type": "line", "point": true },
+      "encoding": {
+        "x": { "field": "ym", "type": "temporal", "title": "Month" },
+        "y": {
+          "field": "index",
+          "type": "quantitative",
+          "title": "Sightings index (100 = busiest month)",
+          "scale": { "domain": [0, 100] },
+          "axis": { "format": "d", "values": [0, 20, 40, 60, 80, 100] }
+        },
+        "tooltip": [
+          { "field": "ym",        "type": "temporal",    "title": "Month" },
+          { "field": "sightings", "type": "quantitative","title": "Sightings", "format": "," },
+          { "field": "index",     "type": "quantitative","title": "Index",     "format": "d" }
+        ]
+      }
+    },
+    {
+      "data": { "values": [{}] },
+      "transform": [
+        { "calculate": "year_min", "as": "ymin" },
+        { "calculate": "toDate(datum.ymin + '-01-01')", "as": "cutoff" }
+      ],
+      "mark": { "type": "rule", "strokeDash": [4, 4], "color": "#555" },
+      "encoding": { "x": { "field": "cutoff", "type": "temporal" } }
+    },
+    {
+      "data": { "values": [{}] },
+      "transform": [
+        { "calculate": "year_min", "as": "ymin" },
+        { "calculate": "toDate(datum.ymin + '-01-01')", "as": "cutoff" },
+        { "calculate": "'Min year: ' + datum.ymin", "as": "label" }
+      ],
+      "mark": { "type": "text", "align": "left", "dx": 6, "dy": -6, "fontSize": 12, "fontWeight": "bold", "color": "#555" },
+      "encoding": {
+        "x": { "field": "cutoff", "type": "temporal" },
+        "y": { "value": 12 },
+        "text": { "field": "label" }
+      }
+    },
+    {
+      "transform": [
+        { "window": [ { "op": "rank", "as": "rk" } ], "sort": [ { "field": "sightings", "order": "descending" } ] },
+        { "filter": "datum.rk == 1" },
+        { "calculate": "'Peak: ' + format(datum.sightings, ',')", "as": "peak_label" }
+      ],
+      "mark": { "type": "text", "dx": 6, "dy": -10, "fontSize": 12, "fontWeight": "bold", "color": "#1e88e5" },
+      "encoding": {
+        "x": { "field": "ym", "type": "temporal" },
+        "y": { "field": "index", "type": "quantitative" },
+        "text": { "field": "peak_label" }
+      }
+    }
+  ],
+
+  "config": { "axis": { "labelFontSize": 12, "titleFontSize": 12 }, "view": { "stroke": "transparent" } }
+}

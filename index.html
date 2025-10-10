@@ -3,27 +3,49 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>FIT3179 Week 9 – Koala Sightings vs Protected Areas</title>
+  <title>FIT3179 – Koala Sightings (ALA) vs Protected Areas (CAPAD)</title>
+
+  <!-- Vega libs -->
   <script src="https://cdn.jsdelivr.net/npm/vega@5"></script>
   <script src="https://cdn.jsdelivr.net/npm/vega-lite@5"></script>
   <script src="https://cdn.jsdelivr.net/npm/vega-embed@6"></script>
+
   <style>
     body { font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif; margin: 2rem; }
     .container { max-width: 1100px; margin: 0 auto; }
     header h1 { margin: 0 0 .5rem; font-size: 1.8rem; }
     header p { margin: 0 0 1rem; color: #555; }
+    h2 { font-size: 1.2rem; margin: 1.25rem 0 .5rem; }
+    .legend{font:14px/1.2 system-ui,Segoe UI,Roboto,sans-serif;margin:.5rem 0;display:flex;gap:16px;flex-wrap:wrap;align-items:center}
+    .legend .item{display:flex;align-items:center;gap:6px;white-space:nowrap}
+    .legend .dot{width:10px;height:10px;border-radius:50%;background:#1e88e5}
+    .legend .line{width:18px;height:0;border-top:3px solid #2e7d32;position:relative;top:-2px}
+    .caption{color:#666;font-size:.9rem;margin:.25rem 0 1rem}
   </style>
 </head>
+
 <body>
   <div class="container">
     <header>
-      <h1>Koala Sightings vs Protected Areas (Demo)</h1>
-      <p>ALA koala sightings, over CAPAD 2022 terrestrial protected areas. Use the year slider.</p>
+      <h1>Koala Sightings vs Protected Areas</h1>
+      <p>Atlas of Living Australia (koala occurrences) over CAPAD 2022 terrestrial protected areas.</p>
     </header>
+
+    <h2>Koala sightings over time</h2>
+    <div class="caption">Index (0–100) where 100 = busiest month in the current filter. Tooltips show the actual monthly count.</div>
+    <div id="trend"></div>
+
+    <h2>Where are the sightings? (Map)</h2>
+    <div class="legend" role="group" aria-label="Map legend">
+      <div class="item"><span class="dot" aria-hidden="true"></span>Koala sightings (ALA)</div>
+      <div class="item"><span class="line" aria-hidden="true"></span>Protected areas (CAPAD 2022)</div>
+    </div>
     <div id="vis"></div>
   </div>
+
   <script>
-    vegaEmbed('#vis', 'specs/map.json', { actions: false }).catch(console.error);
+    vegaEmbed('#trend', 'specs/trend.json?v=5', { actions: false }).catch(console.error);
+    vegaEmbed('#vis',   'specs/map.json?v=5',   { actions: false }).catch(console.error);
   </script>
 </body>
 </html>

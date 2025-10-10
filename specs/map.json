@@ -2,80 +2,79 @@
   "$schema": "https://vega.github.io/schema/vega-lite/v5.json",
   "width": 900,
   "height": 600,
-  "title": {"text": "Koala sightings (ALA) vs Protected Areas (CAPAD)", "anchor": "start"},
-"projection": {
-  "type": "albers",
-  "rotate": [-132, 0, 0],
-  "parallels": [-18, -36],
-  "center": [0, -27],
-  "scale": 1200
-},
+  "title": { "text": "Koala sightings (ALA) vs Protected Areas (CAPAD)", "anchor": "start" },
+
+  "projection": { "type": "albers", "rotate": [-132, 0, 0], "parallels": [-18, -36], "center": [0, -27], "scale": 1200 },
+
   "params": [
-    {
-      "name": "year_min",
-      "value": 2021,
-      "bind": {"input": "range", "min": 2000, "max": 2025, "step": 1, "name": "Min year"}
-    }
+    { "name": "year_min",  "value": 2021,
+      "bind": { "input": "range", "min": 2000, "max": 2025, "step": 1, "name": "Min year " } },
+
+    { "name": "state_sel", "value": "All",
+      "bind": { "input": "select",
+        "options": ["All","Queensland","New South Wales","Victoria","South Australia"],
+        "name": " State " } }
   ],
+
   "layer": [
-    {
-      "data": {"graticule": {"step": [10, 10]}},
-      "mark": {"type": "geoshape", "stroke": "#BDBDBD", "strokeWidth": 0.5, "fillOpacity": 0}
-    },
-    {
-      "data": {
+    { "data": { "graticule": { "step": [30, 30] } },
+      "mark": { "type": "geoshape", "stroke": "#C8C8C8", "strokeWidth": 0.6, "fillOpacity": 0 } },
+
+    { "data": {
         "url": "https://cdn.jsdelivr.net/npm/vega-datasets@2/data/world-110m.json",
-        "format": {"type": "topojson", "feature": "countries"}
+        "format": { "type": "topojson", "feature": "countries" }
       },
-      "transform": [{"filter": "datum.id == 36"}],
-      "mark": {"type": "geoshape", "fill": "#f7f7f7", "stroke": "#9e9e9e", "strokeWidth": 0.8}
+      "transform": [{ "filter": "datum.id == 36" }],
+      "mark": { "type": "geoshape", "fill": "#f7f7f7", "stroke": "#9e9e9e", "strokeWidth": 0.8 }
     },
-    {
-      "data": {
+
+    { "data": {
         "url": "data/capad_2022_simplified.topo.json",
-        "format": {"type": "topojson", "feature": "capad"}
+        "format": { "type": "topojson", "feature": "capad" }
       },
-"mark": {
-  "type": "geoshape",
-  "fillOpacity": 0,
-  "stroke": "#2e7d32",
-  "strokeOpacity": 0.7,
-  "strokeWidth": 0.5
-},
+      "mark": { "type": "geoshape", "fillOpacity": 0, "stroke": "#2e7d32", "strokeOpacity": 0.7, "strokeWidth": 0.5 },
       "encoding": {
         "tooltip": [
-          {"field": "properties.NAME", "type": "nominal", "title": "Protected Area"},
-          {"field": "properties.IUCN_CAT", "type": "nominal", "title": "IUCN"}
+          { "field": "properties.NAME",  "type": "nominal", "title": "Protected Area" },
+          { "field": "properties.IUCN",  "type": "nominal", "title": "IUCN" },
+          { "field": "properties.STATE", "type": "nominal", "title": "State" }
         ]
       }
     },
-    {
-      "data": {"url": "data/occ_koala_recent.csv"},
+
+    { "data": { "url": "data/occ_koala_recent.csv" },
       "transform": [
         { "sample": 5000 },
 
-        {"calculate": "toDate(datum.eventDate)", "as": "event_dt"},
-        {"calculate": "year(datum.event_dt)", "as": "year"},
-        {"filter": "isValid(datum.lon) && isValid(datum.lat)"},
-        {"filter": "datum.year >= year_min"}
+        { "calculate": "toDate(datum.eventDate)", "as": "event_dt" },
+        { "calculate": "year(datum.event_dt)", "as": "year" },
+        { "calculate": "datum.state ? datum.state : datum.stateProvince", "as": "state2" },
+
+        { "filter": "isValid(datum.lon) && isValid(datum.lat)" },
+        { "filter": "datum.lat >= -45 && datum.lat <= -10 && datum.lon >= 110 && datum.lon <= 155" },
+
+        { "filter": "datum.year >= year_min" },
+        { "filter": "state_sel == 'All' || datum.state2 == state_sel" }
       ],
-      "mark": {"type": "circle", "size": 30, "opacity": 0.85, "stroke": "#ffffff", "strokeWidth": 0.4},
+      "mark": { "type": "circle", "size": 30, "opacity": 0.85, "stroke": "#ffffff", "strokeWidth": 0.4 },
       "encoding": {
-        "longitude": {"field": "lon", "type": "quantitative"},
-        "latitude": {"field": "lat", "type": "quantitative"},
-        "color": {"value": "#1e88e5"},
+        "longitude": { "field": "lon", "type": "quantitative" },
+        "latitude":  { "field": "lat", "type": "quantitative" },
+        "color": { "value": "#1e88e5" },
         "tooltip": [
-          {"field": "species", "type": "nominal", "title": "Species"},
-          {"field": "eventDate", "type": "temporal", "title": "Date"},
-          {"field": "year", "type": "quantitative", "title": "Year"},
-          {"field": "state", "type": "nominal", "title": "State"}
+          { "field": "species",   "type": "nominal",      "title": "Species" },
+          { "field": "eventDate", "type": "temporal",     "title": "Date" },
+          { "field": "year",      "type": "quantitative", "title": "Year" },
+          { "field": "state2",    "type": "nominal",      "title": "State" }
         ]
       }
     }
   ],
+
   "config": {
-    "legend": {"labelFontSize": 12, "titleFontSize": 12},
-    "title": {"fontSize": 18},
-    "view": {"stroke": "transparent"}
+    "axis": { "labelFontSize": 12, "titleFontSize": 12 },
+    "legend": { "labelFontSize": 12, "titleFontSize": 12 },
+    "title": { "fontSize": 18 },
+    "view": { "stroke": "transparent" }
   }
 }
