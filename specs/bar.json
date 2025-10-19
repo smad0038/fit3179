@@ -1,0 +1,71 @@
+{
+  "$schema": "https://vega.github.io/schema/vega-lite/v5.json",
+  "description": "Vertical ranked bars: koala sightings per 1,000 km² of protected land by state.",
+  "width": 900,
+  "height": 360,
+
+  "params": [
+    {
+      "name": "year_sel",
+      "value": 2021,
+      "bind": { "input": "range", "min": 2000, "max": 2025, "step": 1, "name": "Year " }
+    }
+  ],
+
+  "data": { "url": "data/occ_koala_recent.csv" },
+
+  "transform": [
+    { "calculate": "toDate(datum.eventDate)", "as": "dt" },
+    { "calculate": "year(datum.dt)", "as": "year" },
+    { "filter": "isValid(datum.lon) && isValid(datum.lat)" },
+    { "filter": "datum.lat >= -45 && datum.lat <= -10 && datum.lon >= 110 && datum.lon <= 155" },
+    { "filter": "datum.year == year_sel" },
+
+    { "aggregate": [{ "op": "count", "as": "sightings" }], "groupby": ["state"] },
+
+    {
+      "lookup": "state",
+      "from": {
+        "data": { "url": "data/state_protected_area.csv" },
+        "key": "state",
+        "fields": ["protected_km2"]
+      }
+    },
+
+    { "calculate": "datum.protected_km2 > 0 ? (datum.sightings / datum.protected_km2) * 1000 : null", "as": "per_1000km2" },
+    { "filter": "isValid(datum.per_1000km2)" }
+  ],
+
+  "mark": { "type": "bar" },
+
+  "encoding": {
+    "x": {
+      "field": "state",
+      "type": "nominal",
+      "sort": "-y",
+      "axis": { "title": "State", "labelAngle": -20, "labelLimit": 120 }
+    },
+    "y": {
+      "field": "per_1000km2",
+      "type": "quantitative",
+      "title": "Sightings per 1,000 km² protected land",
+      "axis": { "format": ",.0f" }
+    },
+    "color": {
+      "field": "state",
+      "type": "nominal",
+      "scale": { "scheme": "tableau10" },
+      "legend": null
+    },
+    "tooltip": [
+      { "field": "state", "title": "State" },
+      { "field": "per_1000km2", "type": "quantitative", "title": "Per 1,000 km²", "format": ".2f" }
+    ]
+  },
+
+  "config": {
+    "axis":  { "labelFontSize": 12, "titleFontSize": 12, "grid": true },
+    "view":  { "stroke": "transparent" },
+    "title": { "fontSize": 16, "fontWeight": "bold" }
+  }
+}

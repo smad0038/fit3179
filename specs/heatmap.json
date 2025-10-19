@@ -1,0 +1,62 @@
+{
+  "$schema": "https://vega.github.io/schema/vega-lite/v5.json",
+  "description": "Monthly koala sightings by state (heatmap), filtered by Year.",
+  "width": 900,
+  "height": 320,
+
+  "params": [
+    {
+      "name": "year_sel",
+      "value": 2021,
+      "bind": { "input": "range", "min": 2000, "max": 2025, "step": 1, "name": "Year " }
+    }
+  ],
+
+  "data": { "url": "data/occ_koala_recent.csv" },
+
+  "transform": [
+    { "calculate": "toDate(datum.eventDate)", "as": "dt" },
+    { "calculate": "year(datum.dt)", "as": "year" },
+    { "filter": "isValid(datum.lon) && isValid(datum.lat)" },
+    { "filter": "datum.lat >= -45 && datum.lat <= -10 && datum.lon >= 110 && datum.lon <= 155" },
+    { "filter": "datum.year == year_sel" },
+
+    { "timeUnit": "utcmonth", "field": "dt", "as": "month_utc" },
+    { "aggregate": [{ "op": "count", "as": "sightings" }], "groupby": ["state", "month_utc"] }
+  ],
+
+  "mark": { "type": "rect", "stroke": "#e5e5e5", "strokeWidth": 1 },
+
+  "encoding": {
+    "x": {
+      "field": "month_utc",
+      "type": "temporal",
+      "title": "Month",
+      "axis": { "format": "%b" }
+    },
+    "y": {
+      "field": "state",
+      "type": "nominal",
+      "title": "State",
+      "sort": [
+        "New South Wales","Queensland","Victoria","South Australia",
+        "Western Australia","Tasmania","Northern Territory","Australian Capital Territory"
+      ]
+    },
+    "color": {
+      "field": "sightings",
+      "type": "quantitative",
+      "title": "Sightings",
+      "scale": { "scheme": "reds" }
+    },
+    "tooltip": [
+      { "field": "state", "title": "State" },
+      { "field": "sightings", "type": "quantitative", "title": "Sightings", "format": "," }
+    ]
+  },
+
+  "config": {
+    "axis": { "labelFontSize": 12, "titleFontSize": 12, "grid": true },
+    "view": { "stroke": "transparent" }
+  }
+}

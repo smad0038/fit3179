@@ -3,49 +3,140 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>FIT3179 – Koala Sightings (ALA) vs Protected Areas (CAPAD)</title>
+  <title>Koala Sightings vs Protected Areas (FIT3179)</title>
 
   <!-- Vega libs -->
   <script src="https://cdn.jsdelivr.net/npm/vega@5"></script>
   <script src="https://cdn.jsdelivr.net/npm/vega-lite@5"></script>
   <script src="https://cdn.jsdelivr.net/npm/vega-embed@6"></script>
 
+  <!-- Typography: Atkinson Hyperlegible (high readability) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;500;600;700&display=swap" rel="stylesheet">
+
   <style>
-    body { font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif; margin: 2rem; }
-    .container { max-width: 1100px; margin: 0 auto; }
-    header h1 { margin: 0 0 .5rem; font-size: 1.8rem; }
-    header p { margin: 0 0 1rem; color: #555; }
-    h2 { font-size: 1.2rem; margin: 1.25rem 0 .5rem; }
-    .legend{font:14px/1.2 system-ui,Segoe UI,Roboto,sans-serif;margin:.5rem 0;display:flex;gap:16px;flex-wrap:wrap;align-items:center}
-    .legend .item{display:flex;align-items:center;gap:6px;white-space:nowrap}
-    .legend .dot{width:10px;height:10px;border-radius:50%;background:#1e88e5}
-    .legend .line{width:18px;height:0;border-top:3px solid #2e7d32;position:relative;top:-2px}
-    .caption{color:#666;font-size:.9rem;margin:.25rem 0 1rem}
+    :root{
+      --text:#0f1220;       /* darker body text */
+      --muted:#5b6474;
+      --soft:#eef2f7;
+      --accent:#e53935;     /* koala dots */
+      --capad:#a9adb4;      /* CAPAD outlines */
+      --link:#0b74de;
+      --maxw:1100px;
+    }
+    html,body{margin:0;padding:0;background:#fff;color:var(--text)}
+    body{
+      font-family:"Atkinson Hyperlegible",system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
+      font-size:17px; line-height:1.6; letter-spacing:.1px;
+    }
+    .wrap{max-width:var(--maxw);margin:0 auto;padding:28px 16px 64px}
+    header h1{margin:.15rem 0 .4rem;font-weight:700;font-size:clamp(24px,3.3vw,34px);line-height:1.2}
+    header p{margin:0 0 1.2rem;color:var(--muted);max-width:70ch}
+
+    h2{margin:26px 0 6px;font-size:clamp(18px,2.5vw,22px);font-weight:700}
+    .lead{margin:.35rem 0 10px;color:#2a3140;font-weight:600}
+    .viz{margin:6px 0 8px}
+
+    /* Semantic figure blocks for each viz */
+    figure.chart{margin:0 0 22px}
+    figcaption.story{
+      margin:10px 0 24px; max-width:78ch;
+      color:var(--text); font-weight:500;
+    }
+
+    .legend{font:14px/1.2 "Atkinson Hyperlegible",system-ui,Segoe UI,Roboto,sans-serif;margin:.35rem 0 .6rem;display:flex;gap:16px;align-items:center}
+    .legend .item{display:flex;align-items:center;gap:6px}
+    .legend .dot{width:10px;height:10px;border-radius:50%;background:var(--accent);border:1px solid #000}
+    .legend .line{width:18px;height:0;border-top:3px solid var(--capad);position:relative;top:-2px}
+    hr{border:none;border-top:1px solid var(--soft);margin:18px 0}
+
+    a{color:var(--link);text-decoration:none} a:hover{text-decoration:underline}
+    footer{margin-top:30px;color:var(--muted);font-size:.95rem}
   </style>
 </head>
-
 <body>
-  <div class="container">
+  <div class="wrap">
     <header>
-      <h1>Koala Sightings vs Protected Areas</h1>
-      <p>Atlas of Living Australia (koala occurrences) over CAPAD 2022 terrestrial protected areas.</p>
+      <h1>Koala sightings near protected areas in Australia</h1>
+      <p>
+        We combine recent koala records from the Atlas of Living Australia (ALA) with CAPAD 2022 protected-area boundaries.
+        Use the controls above each chart (Year / State) to focus the story.
+      </p>
     </header>
 
-    <h2>Koala sightings over time</h2>
-    <div class="caption">Index (0–100) where 100 = busiest month in the current filter. Tooltips show the actual monthly count.</div>
-    <div id="trend"></div>
+    <!-- 1) MAP -->
+    <h2>1) Where are koalas being seen?</h2>
+    <p class="lead">Red points are sightings; fine grey lines show protected areas.</p>
 
-    <h2>Where are the sightings? (Map)</h2>
-    <div class="legend" role="group" aria-label="Map legend">
-      <div class="item"><span class="dot" aria-hidden="true"></span>Koala sightings (ALA)</div>
-      <div class="item"><span class="line" aria-hidden="true"></span>Protected areas (CAPAD 2022)</div>
-    </div>
-    <div id="vis"></div>
+    <figure class="chart">
+      <div id="vis-map" class="viz" aria-describedby="cap-map"></div>
+      <div class="legend" aria-label="Legend">
+        <div class="item"><span class="dot" aria-hidden="true"></span>Sighting (ALA)</div>
+        <div class="item"><span class="line" aria-hidden="true"></span>Protected Area (CAPAD)</div>
+      </div>
+      <figcaption id="cap-map" class="story">
+        The red dots mark places where people reported koalas. Most cluster along the east and south-east coast, with fewer inland.
+        That pattern reflects both suitable habitat and where people actually walk. If you go looking, move quietly, scan the forked
+        branches of eucalypts, and keep a respectful distance so the animal can rest undisturbed.
+      </figcaption>
+    </figure>
+    <hr />
+
+    <!-- 2) BAR -->
+    <h2>2) Which states stand out after adjusting for area?</h2>
+    <p class="lead">Bars show <strong>sightings per 1,000&nbsp;km² of protected land</strong> for the selected year.</p>
+
+    <figure class="chart">
+      <div id="vis-bar" class="viz" aria-describedby="cap-bar"></div>
+      <figcaption id="cap-bar" class="story">
+        This view compares states fairly by accounting for the amount of protected land. A taller bar means more reports relative to
+        area, not necessarily more koalas overall. Use it to decide where to focus effort in a given year, then check local access,
+        park advice and conditions before planning a trip.
+      </figcaption>
+    </figure>
+    <hr />
+
+    <!-- 3) HEATMAP -->
+    <h2>3) When during the year do sightings spike?</h2>
+    <p class="lead">Month × state heatmap. Darker red = more reports that month.</p>
+
+    <figure class="chart">
+      <div id="vis-heat" class="viz" aria-describedby="cap-heat"></div>
+      <figcaption id="cap-heat" class="story">
+        Darker patches show busier months. Many states brighten in spring and early summer, while winter usually quietens down.
+        Weather, fire closures and holidays shift the timing by state, so treat this as a guide and always check park alerts and
+        forecast conditions before you go.
+      </figcaption>
+    </figure>
+    <hr />
+
+    <!-- 4) TREND -->
+    <h2>4) Month-by-month pattern in the selected year</h2>
+    <p class="lead">A single line for your Year/State; hover to see exact monthly counts.</p>
+
+    <figure class="chart">
+      <div id="vis-trend" class="viz" aria-describedby="cap-trend"></div>
+      <figcaption id="cap-trend" class="story">
+        The line traces your chosen year and state month by month. Peaks hint at better times to look; dips often reflect fewer reports
+        rather than no animals. Pair this with the heatmap to pick a good month, and remember that patient, quiet walking makes sightings
+        more likely and safer for the koalas.
+      </figcaption>
+    </figure>
+
+    <footer>
+      Sources: Atlas of Living Australia (occurrence records) · DCCEEW CAPAD 2022 (protected areas).&nbsp;
+      Author: Your Name (FIT3179).&nbsp;
+      Updated: 19 Oct 2025 AEST.
+    </footer>
   </div>
 
+  <!-- Embed specs (no changes to your JSON files) -->
   <script>
-    vegaEmbed('#trend', 'specs/trend.json?v=5', { actions: false }).catch(console.error);
-    vegaEmbed('#vis',   'specs/map.json?v=5',   { actions: false }).catch(console.error);
+    vegaEmbed('#vis-map',   'specs/map.json',     {actions:false}).catch(console.error);
+    vegaEmbed('#vis-bar',   'specs/bar.json',     {actions:false}).catch(console.error);
+    vegaEmbed('#vis-heat',  'specs/heatmap.json', {actions:false}).catch(console.error);
+    vegaEmbed('#vis-trend', 'specs/trend.json',   {actions:false}).catch(console.error);
   </script>
 </body>
 </html>
